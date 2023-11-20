@@ -209,47 +209,7 @@ exports.signin = async (req, res) => {
 };
 
 
-// exports.signin = ((req, res) => {
-//  const {email, password} = req.body
 
-//  // To check if user exists
-
-//  exports.login = async (req, res) => {
-//     try {
-//         ({ email, password } = req.body);
-
-//         const user = await User.findOne({ email }).exec();
-
-//         if (!user) {
-//             return res.status(400).json({
-//                 error: 'User with that email does not exist, please sign up'
-//             });
-//         }
-
-//         // To authenticate
-//         if (!user.authenticate(password)) {
-//             return res.status(400).json({
-//                 error: 'Email and password do not match'
-//             });
-//         }
-
-//         // To generate a token and send to user client/user
-//         const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-//         const { _id, name, email, role } = user;
-
-//         return res.json({
-//             token,
-//             user: { _id, name, email, role }
-//         });
-//     } catch (err) {
-//         console.error('LOGIN ERROR', err);
-//         res.status(500).json({
-//             error: 'Internal Server Error'
-//         });
-//     }
-// };
- 
-// });
 
 
 //  User.findOne({email}).exec((err, user) => {
