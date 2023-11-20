@@ -65,7 +65,7 @@ exports.signup = async (req, res) => {
 
         const emailData = {
             From: process.env.EMAIL_FROM,
-            To: 'coach@solutionsbyjam.com',
+            To: email,
             Subject: 'Account Activation Link',
             HtmlBody: `
                 <h1>Please use the following link to activate your account.</h1>
@@ -89,55 +89,74 @@ exports.signup = async (req, res) => {
     }
 };
 
+exports.accountActivation = async (req, res) => {
+    try {
+        const { token } = req.body;
 
-exports.accountActivation = (req, res) => {
-    const {token} = req.body
+        if (!token) {
+            return res.json({
+                message: 'Something went wrong, please try again.'
+            });
+        }
 
-    if(token) {
-        jwt.verify(token, process.env.JWT_ACCOUNT_ACTIVATION, function(err, decoded){
-            if(err) {
-                console.log('JWT VERIFY IN ACCOUNT ACTIVATION ERROR', err)
-                return res.status(401).json({
-                    error: 'Expired link. Kindly signup again'
-                })
-            }
-            const {name, email, password} = jwt.decode(token)
+        const decoded = jwt.verify(token, process.env.JWT_ACCOUNT_ACTIVATION);
 
-            const user = new User({name, email, password})
+        const { name, email, password } = jwt.decode(token);
 
-            exports.saveUser = async (req, res) => {
-                try {
-                    user = req.user; // Assuming req.user is the user to be saved
-            
-                    await user.save();
-            
-                    res.json({
-                        message: 'Signup success. You can sign in now.'
-                    });
-                } catch (err) {
-                    console.error('SAVE USER IN ACCOUNT ACTIVATION ERROR', err);
-                    res.status(401).json({
-                        error: 'Error saving user in database. Try signup again'
-                    });
-                }
-            };
+        const user = new User({ name, email, password });
 
-            // user.save((err, user) => {
-            //    if(err) {
-            //     console.log('SAVE USER IN ACCOUNT ACTIVATION ERROR', err)
-            //     return res.status(401).json({
-            //         error: 'Error saving user in database. Try signup again'
-            //        });
-            // } 
-            //    return res.json({
-            //     message: 'Signup success. You can sign in now.'
-            //    })
-            // } )
-        })
-    } else {return res.json({
-        message: 'Something went wrong, please try again.'
-       })}
+        const savedUser = await user.save();
+
+        res.json({
+            message: 'Signup success. You can sign in now.',
+            user: savedUser,
+        });
+    } catch (error) {
+        console.error('Account Activation Error:', error);
+
+        if (error.name === 'TokenExpiredError') {
+            res.status(401).json({
+                error: 'Expired link. Kindly signup again'
+            });
+        } else {
+            res.status(401).json({
+                error: 'Error during account activation. Try signup again.'
+            });
+        }
+    }
 };
+
+// exports.accountActivation = (req, res) => {
+//     const {token} = req.body
+
+//     if(token) {
+//         jwt.verify(token, process.env.JWT_ACCOUNT_ACTIVATION, function(err, decoded){
+//             if(err) {
+//                 console.log('JWT VERIFY IN ACCOUNT ACTIVATION ERROR', err)
+//                 return res.status(401).json({
+//                     error: 'Expired link. Kindly signup again'
+//                 })
+//             }
+//             const {name, email, password} = jwt.decode(token);
+
+//             const user = new User({name, email, password});
+
+//             user.save((err, user) => {
+//                if(err) {
+//                 console.log('SAVE USER IN ACCOUNT ACTIVATION ERROR', err)
+//                 return res.status(401).json({
+//                     error: 'Error saving user in database. Try signup again'
+//                    });
+//             } 
+//                return res.json({
+//                 message: 'Signup success. You can sign in now.'
+//                })
+//             } )
+//         })
+//     } else {return res.json({
+//         message: 'Something went wrong, please try again.'
+//        })}
+// };
 
 /**
  * Check if user is trying to signin but have not signup yet
@@ -152,15 +171,12 @@ exports.accountActivation = (req, res) => {
  */
 
 // Method to signin user
-exports.signin = ((req, res) => {
- const {email, password} = req.body
 
- // Check if user exists
-
- exports.login = async (req, res) => {
+exports.signin = async (req, res) => {
     try {
-        ({ email, password } = req.body);
+        const { email, password } = req.body;
 
+        // To check if user exists
         const user = await User.findOne({ email }).exec();
 
         if (!user) {
@@ -178,20 +194,64 @@ exports.signin = ((req, res) => {
 
         // To generate a token and send to user client/user
         const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        const { _id, name, email, role } = user;
+        const { _id, name, role } = user;
 
         return res.json({
             token,
             user: { _id, name, email, role }
         });
     } catch (err) {
-        console.error('LOGIN ERROR', err);
+        console.error('SIGNIN ERROR', err);
         res.status(500).json({
             error: 'Internal Server Error'
         });
     }
 };
+
+
+// exports.signin = ((req, res) => {
+//  const {email, password} = req.body
+
+//  // To check if user exists
+
+//  exports.login = async (req, res) => {
+//     try {
+//         ({ email, password } = req.body);
+
+//         const user = await User.findOne({ email }).exec();
+
+//         if (!user) {
+//             return res.status(400).json({
+//                 error: 'User with that email does not exist, please sign up'
+//             });
+//         }
+
+//         // To authenticate
+//         if (!user.authenticate(password)) {
+//             return res.status(400).json({
+//                 error: 'Email and password do not match'
+//             });
+//         }
+
+//         // To generate a token and send to user client/user
+//         const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+//         const { _id, name, email, role } = user;
+
+//         return res.json({
+//             token,
+//             user: { _id, name, email, role }
+//         });
+//     } catch (err) {
+//         console.error('LOGIN ERROR', err);
+//         res.status(500).json({
+//             error: 'Internal Server Error'
+//         });
+//     }
+// };
  
+// });
+
+
 //  User.findOne({email}).exec((err, user) => {
 //     if(err || !user) {
 //         return res.status(400).json({
@@ -213,4 +273,3 @@ exports.signin = ((req, res) => {
 //         user: {_id, name, email, role}
 //     });
 // })
-});

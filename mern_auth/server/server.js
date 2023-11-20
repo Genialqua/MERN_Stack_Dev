@@ -8,7 +8,7 @@ require('dotenv').config();
 const app = express();
 
 // To connect to database
-mongoose.connect('mongodb://localhost:27017/', {
+mongoose.connect(process.env.DATABASE, {
   
 }) 
 .then(() => console.log('DB connected'))
