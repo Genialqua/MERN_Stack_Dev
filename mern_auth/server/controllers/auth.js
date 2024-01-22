@@ -8,7 +8,7 @@
 
 //  exports.signup = (req, res) => {
 //     //console.log('REQ BODY ON SIGNUP', req.body);
-//     const {name, email, password} = req.body
+//     const {firstname, email, password} = req.body
 
 //     User.findOne({ email })
 //     .then(user => {
@@ -27,7 +27,7 @@
 //         });
 //     });
 
-//     let newUser = new User({name, email, password})
+//     let newUser = new User({firstname, email, password})
 
 //     newUser.save()
 //     .then(success => {
@@ -51,7 +51,7 @@ const client = new postmark.ServerClient(process.env.POSTMARK_API_KEY);
 
 exports.signup = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const {name, email, phoneNumber, birthDay, ageGroup, occupation, gender, maritalStatus, password} = req.body;
 
         const user = await User.findOne({ email });
 
@@ -61,7 +61,7 @@ exports.signup = async (req, res) => {
             });
         }
 
-        const token = jwt.sign({ name, email, password }, process.env.JWT_ACCOUNT_ACTIVATION, { expiresIn: '10m' });
+        const token = jwt.sign({ name, email, phoneNumber, birthDay, ageGroup, occupation, gender, maritalStatus, password }, process.env.JWT_ACCOUNT_ACTIVATION, { expiresIn: '10m' });
 
         const emailData = {
             From: process.env.EMAIL_FROM,
@@ -101,14 +101,14 @@ exports.accountActivation = async (req, res) => {
 
         const decoded = jwt.verify(token, process.env.JWT_ACCOUNT_ACTIVATION);
 
-        const { name, email, password } = jwt.decode(token);
+        const {name, email, phoneNumber, birthDay, ageGroup, occupation, gender, maritalStatus, password } = jwt.decode(token);
 
-        const user = new User({ name, email, password });
+        const user = new User({ name, email, phoneNumber, birthDay, ageGroup, occupation, gender, maritalStatus, password });
 
         const savedUser = await user.save();
 
         res.json({
-            message: 'Signup success. You can sign in now.',
+            message: 'Signup successful. You can sign in now.',
             user: savedUser,
         });
     } catch (error) {
@@ -116,7 +116,7 @@ exports.accountActivation = async (req, res) => {
 
         if (error.name === 'TokenExpiredError') {
             res.status(401).json({
-                error: 'Expired link. Kindly signup again'
+                error: 'Sorry, the link has expired. Kindly signup again'
             });
         } else {
             res.status(401).json({
@@ -137,9 +137,9 @@ exports.accountActivation = async (req, res) => {
 //                     error: 'Expired link. Kindly signup again'
 //                 })
 //             }
-//             const {name, email, password} = jwt.decode(token);
+//             const {firstname, email, password} = jwt.decode(token);
 
-//             const user = new User({name, email, password});
+//             const user = new User({firstname, email, password});
 
 //             user.save((err, user) => {
 //                if(err) {
@@ -194,11 +194,11 @@ exports.signin = async (req, res) => {
 
         // To generate a token and send to user client/user
         const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        const { _id, name, role } = user;
+        const {_id, name, phoneNumber, birthDay, ageGroup, occupation, gender, maritalStatus, role} = user;
 
         return res.json({
             token,
-            user: { _id, name, email, role }
+            user: { _id,name, email, phoneNumber, birthDay, ageGroup, occupation, gender, maritalStatus, role }
         });
     } catch (err) {
         console.error('SIGNIN ERROR', err);
@@ -226,10 +226,10 @@ exports.signin = async (req, res) => {
 //     }
 //     // To generate a token and send to user client/user
 //     const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET, {expiresIn: '7d'});
-//     const {_id, name, email, role} = user
+//     const {_id, firstname, email, role} = user
 
 //     return res.json({
 //         token,
-//         user: {_id, name, email, role}
+//         user: {_id, firstname, email, role}
 //     });
 // })
