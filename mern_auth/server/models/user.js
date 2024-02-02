@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
     },
     ageGroup: {
         type: String,
-        enum: ['Under 18', '18 - 25', '26 - 35', '36 - 45', '46 - 55', '56 and above'],
+        enum: ['18 - 25', '26 - 35', '36 - 45', '46 - 55', '56 and above'],
         trim: true,
         required: true,
         max: 15
@@ -102,8 +102,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
-        
-}, {timestamps: true})
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,       
+},
+ 
+{timestamps: true})
 // virtual
 userSchema.virtual('password')
 .set(function(password) {
